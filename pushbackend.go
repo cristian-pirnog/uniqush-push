@@ -381,6 +381,6 @@ func (self *PushBackEnd) pushImpl(reqId string, remoteAddr string, service strin
 	wg.Wait()
 }
 
-func (self *PushBackEnd) Preview(ptname string, notif *push.Notification) ([]byte, push.PushError) {
-	return self.psm.Preview(ptname, notif)
-}
+// func (self *PushBackEnd) Preview(ptname string, notif *push.Notification) ([]byte, push.PushError) {
+// 	return self.psm.Preview(ptname, notif)
+// }
