@@ -483,7 +483,12 @@ func (self *RestAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 	fmt.Fprintf(w, "%s\r\n", string(bytes))
 	// 	return
 	case VERSION_INFO_URL:
-		fmt.Fprintf(w, "%v\r\n", self.version)
+		jsonVersion, _ := json.Marshal(
+			struct {
+				Version string `json:"version"`
+			}{Version: self.version})
+
+		w.Write(jsonVersion)
 		self.loggers[LOGGER_WEB].Infof("Checked version from %v", remoteAddr)
 		return
 	case STOP_PROGRAM_URL:
