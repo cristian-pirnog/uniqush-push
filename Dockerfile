@@ -1,20 +1,17 @@
-FROM centos:7
-MAINTAINER Misha Nasledov <misha@nasledov.com>
+FROM golang:1.7
+MAINTAINER Cristian Pirnog
 
-RUN /usr/bin/yum -y install golang git gcc make mercurial-hgk wget
+ENV CODE_PATH=/go/src/github/cristian-pirnog/uniqush-push
+ENV CONF_FILE=conf/uniqush-push.conf
 
-ENV GOBIN /tmp/bin
-ENV GOPATH /tmp
+WORKDIR ${CODE_PATH}
+COPY . ${CODE_PATH}
 
-RUN go get github.com/uniqush/uniqush-push
+RUN go-wrapper download
+RUN go-wrapper install
 
-COPY conf/uniqush-push.conf .
-
-RUN cp /tmp/bin/uniqush-push /usr/bin \
-    && mkdir /etc/uniqush/ \
-    && cp ./uniqush-push.conf /etc/uniqush/ \
-    && sed -i -e 's/localhost/0.0.0.0/' /etc/uniqush/uniqush-push.conf
+RUN sed -i -e 's/localhost/0.0.0.0/' ${CONF_FILE}
 
 EXPOSE 9898
 
-CMD ["/usr/bin/uniqush-push"]
+CMD go-wrapper run -config ${CONF_FILE}
