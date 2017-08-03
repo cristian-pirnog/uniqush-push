@@ -34,7 +34,7 @@ var _ common.PushRequestProcessor = &MockPushRequestProcessor{}
 func (self *MockPushRequestProcessor) AddRequest(request *common.PushRequest) {
 	close(request.ErrChan) // Would have contents only for an invalid request. Send nothing.
 	go func() {
-		for i, _ := range request.DPList {
+		for i := range request.DPList {
 			request.ResChan <- &common.APNSResult{
 				MsgId:  request.GetId(i),
 				Status: self.status,
@@ -58,13 +58,18 @@ func (self *MockPushRequestProcessor) SetErrorReportChan(errChan chan<- push.Pus
 }
 
 func TestCreatePushService(t *testing.T) {
-	service := newPushService(newMockRequestProcessor(APNS_SUCCESS))
+	mockRequestProcessor := newMockRequestProcessor(APNS_SUCCESS)
+	service := NewPushService()
+	service.binaryRequestProcessor = mockRequestProcessor
+	service.httpRequestProcessor = mockRequestProcessor
 	service.Finalize()
 }
 
 func newPushServiceWithErrorChannel(status uint8) (*pushService, *MockPushRequestProcessor, chan push.PushError) {
 	mockRequestProcessor := newMockRequestProcessor(status)
-	service := newPushService(mockRequestProcessor)
+	service := NewPushService()
+	service.binaryRequestProcessor = mockRequestProcessor
+	service.httpRequestProcessor = mockRequestProcessor
 	errChan := make(chan push.PushError, 100)
 	service.SetErrorReportChan(errChan)
 	return service, mockRequestProcessor, errChan

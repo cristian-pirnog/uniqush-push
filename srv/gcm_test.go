@@ -10,7 +10,10 @@ import (
 func testToGCMPayload(t *testing.T, postData map[string]string, regIds []string, expectedPayload string) {
 	notif := push.NewEmptyNotification()
 	notif.Data = postData
-	payload, err := toGCMPayload(notif, regIds)
+	// Create a push service, just for the sake of realistically testing building payloads
+	stubPushService := newGCMPushService()
+	defer stubPushService.Finalize()
+	payload, err := stubPushService.ToCMPayload(notif, regIds)
 	if err != nil {
 		t.Fatalf("Encountered error %v\n", err)
 	}
@@ -30,7 +33,29 @@ func TestToGCMPayloadWithRawPayload(t *testing.T) {
 	testToGCMPayload(t, postData, regIds, expectedPayload)
 }
 
+func TestToGCMPayloadWithRawUnescapedPayload(t *testing.T) {
+	postData := map[string]string{
+		"msggroup":            "somegroup",
+		"uniqush.payload.gcm": `{"message":{"key": {},"x":"<a☃?>\"'"},"other":{}}`,
+		"foo": "bar",
+	}
+	regIds := []string{"CAFE1-FF", "42-607"}
+	expectedPayload := `{"registration_ids":["CAFE1-FF","42-607"],"collapse_key":"somegroup","data":{"message":{"key":{},"x":"<a☃?>\"'"},"other":{}},"time_to_live":3600}`
+	testToGCMPayload(t, postData, regIds, expectedPayload)
+}
+
 func TestToGCMPayloadWithCommonParameters(t *testing.T) {
+	postData := map[string]string{
+		"msggroup":            "somegroup",
+		"uniqush.payload.gcm": `{"message":{"key": {},"x":"<a☃?>\"'"},"other":{}}`,
+		"foo": "bar",
+	}
+	regIds := []string{"CAFE1-FF", "42-607"}
+	expectedPayload := `{"registration_ids":["CAFE1-FF","42-607"],"collapse_key":"somegroup","data":{"message":{"key":{},"x":"<a☃?>\"'"},"other":{}},"time_to_live":3600}`
+	testToGCMPayload(t, postData, regIds, expectedPayload)
+}
+
+func TestToGCMPayloadWithCommonParametersV2(t *testing.T) {
 	postData := map[string]string{
 		"msggroup":  "somegroup",
 		"other":     "value",
@@ -65,4 +90,14 @@ func TestToGCMPayloadUsesMsggroupForCollapseKey(t *testing.T) {
 	regIds := []string{"CAFE1-FF", "42-607"}
 	expectedPayload := `{"registration_ids":["CAFE1-FF","42-607"],"collapse_key":"AMsgGroup","data":{"message":{"aPushType":{"foo":"bar","other":"value"},"gcm":{},"others":{"type":"aPushType"}}},"time_to_live":3600}`
 	testToGCMPayload(t, postData, regIds, expectedPayload)
+}
+
+// Test the return value of Name()
+func TestGCMPushServiceName(t *testing.T) {
+	stubPushService := newGCMPushService()
+	defer stubPushService.Finalize()
+	name := stubPushService.Name()
+	if name != "gcm" {
+		t.Errorf("Expected %s, got %s", "gcm", name)
+	}
 }

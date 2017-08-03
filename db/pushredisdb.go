@@ -25,11 +25,11 @@ import (
 
 	"github.com/uniqush/log"
 	"github.com/uniqush/uniqush-push/push"
-	redis3 "gopkg.in/redis.v3"
+	redis5 "gopkg.in/redis.v5"
 )
 
 type PushRedisDB struct {
-	client *redis3.Client
+	client *redis5.Client
 	psm    *push.PushServiceManager
 }
 
@@ -67,10 +67,10 @@ func newPushRedisDB(c *DatabaseConfig) (*PushRedisDB, error) {
 	if err != nil {
 		db = 0
 	}
-	client := redis3.NewClient(&redis3.Options{
+	client := redis5.NewClient(&redis5.Options{
 		Addr:     fmt.Sprintf("%s:%d", c.Host, c.Port),
 		Password: c.Password,
-		DB:       db,
+		DB:       int(db),
 	})
 
 	ret := new(PushRedisDB)
@@ -419,8 +419,8 @@ func (r *PushRedisDB) RebuildServiceSet() error {
 		}
 		serviceNameSet[serviceName] = true
 	}
-	var serviceNameList []string
-	for serviceName, _ := range serviceNameSet {
+	var serviceNameList []interface{}
+	for serviceName := range serviceNameSet {
 		serviceNameList = append(serviceNameList, serviceName)
 	}
 	if len(serviceNameList) > 0 {
