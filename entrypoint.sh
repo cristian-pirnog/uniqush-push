@@ -25,4 +25,6 @@ for var in "${variables[@]}"; do
     replaceEnvironmentVariable ${var} ${confFile}
 done
 
-go-wrapper run -config ${confFile}
+# Run the command provided as input argument
+$@
+

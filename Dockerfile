@@ -11,4 +11,4 @@ RUN go-wrapper download && \
 EXPOSE 9898
 
 ENTRYPOINT ["./entrypoint.sh"]
-
+CMD ["go-wrapper", "run", "-config", "conf/uniqush-push.conf"]
