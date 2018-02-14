@@ -68,6 +68,8 @@ func toAPNSPayload(n *push.Notification) ([]byte, push.PushError) {
 	alert := make(map[string]interface{})
 	for k, v := range n.Data {
 		switch k {
+		case "title":
+			alert["title"] = v
 		case "msg":
 			alert["body"] = v
 		case "action-loc-key":
@@ -75,6 +77,10 @@ func toAPNSPayload(n *push.Notification) ([]byte, push.PushError) {
 		case "loc-key":
 			alert[k] = v
 		case "loc-args":
+			alert[k] = parseList(v)
+		case "title-loc-key":
+			alert[k] = v
+		case "title-loc-args":
 			alert[k] = parseList(v)
 		case "badge", "content-available":
 			b, err := strconv.Atoi(v)
@@ -107,9 +113,6 @@ func toAPNSPayload(n *push.Notification) ([]byte, push.PushError) {
 	if err != nil {
 		return nil, push.NewErrorf("Failed to convert notification data to JSON: %v", err)
 	}
-	if len(j) > maxPayLoadSize {
-		return nil, push.NewBadNotificationWithDetails("payload is too large")
-	}
 	return j, nil
 }
 
@@ -124,9 +127,7 @@ func parseList(str string) []string {
 		} else if r == '\\' {
 			escape = true
 		} else if r == ',' {
-			if len(elem) > 0 {
-				ret = append(ret, string(elem))
-			}
+			ret = append(ret, string(elem))
 			elem = elem[:0]
 		} else {
 			elem = append(elem, r)
